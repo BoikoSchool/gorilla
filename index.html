@@ -1,0 +1,1672 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Розбір коду гри «Горили»: тест</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #E6ECEF;
+  --surface: #FFFFFF;
+  --ink: #0C222C;
+  --muted: #4B6571;
+  --line: #C9D4DA;
+  --primary: #0C222C;
+  --on-primary: #F3EFEC;
+  --ok: #1F7A4A;
+  --ok-bg: #E0F2E8;
+  --bad: #C4271C;
+  --bad-bg: #FBE6E3;
+  --code-bg: #0C222C;
+  --code-ink: #ECEAEA;
+  --code-num: #5E7C89;
+  --tok-kw: #FF8A7A;
+  --tok-str: #F3E3A2;
+  --tok-num: #9FD7FF;
+  --tok-com: #6F8C98;
+  --sel: #D6E4EA;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C222C;
+    --surface: #12303D;
+    --ink: #ECEAEA;
+    --muted: #9CB3BD;
+    --line: #23495A;
+    --primary: #F3EFEC;
+    --on-primary: #0C222C;
+    --ok: #7CD69E;
+    --ok-bg: #173F30;
+    --bad: #FF8A7A;
+    --bad-bg: #45211F;
+    --code-bg: #081A22;
+    --sel: #1C4254;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0C222C;
+  --surface: #12303D;
+  --ink: #ECEAEA;
+  --muted: #9CB3BD;
+  --line: #23495A;
+  --primary: #F3EFEC;
+  --on-primary: #0C222C;
+  --ok: #7CD69E;
+  --ok-bg: #173F30;
+  --bad: #FF8A7A;
+  --bad-bg: #45211F;
+  --code-bg: #081A22;
+  --sel: #1C4254;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Onest", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid #4FA3D1; outline-offset: 2px; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 0 20px 64px; }
+.hidden { display: none !important; }
+
+/* hero */
+.hero { padding-top: 28px; }
+.scene {
+  display: block; width: 100%; height: auto;
+  border-radius: 6px;
+  background: #0C222C;
+}
+.scene-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 8px; color: var(--muted); font-size: 14px; }
+.textbtn { background: none; border: 0; padding: 4px 0; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; font-size: 14px; }
+.textbtn:hover { color: var(--ink); }
+h1 {
+  font-weight: 800; font-size: clamp(34px, 7vw, 56px); line-height: 1.02; letter-spacing: -0.02em;
+  margin: 28px 0 14px;
+}
+.lead { color: var(--muted); max-width: 60ch; margin: 0 0 28px; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; border-radius: 4px; padding: 13px 22px; cursor: pointer; font-weight: 700;
+  background: var(--primary); color: var(--on-primary);
+}
+.btn:disabled { opacity: .35; cursor: not-allowed; }
+.btn.ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 2px var(--line); }
+.btn.ghost:hover { box-shadow: inset 0 0 0 2px var(--ink); }
+
+.sections { list-style: none; padding: 0; margin: 40px 0 0; border-top: 2px solid var(--ink); }
+.sections li { border-bottom: 1px solid var(--line); }
+.sec-btn {
+  width: 100%; text-align: left; background: none; border: 0; cursor: pointer;
+  display: grid; grid-template-columns: 1fr auto; gap: 2px 16px; padding: 14px 4px;
+}
+.sec-btn:hover .sec-title { text-decoration: underline; text-underline-offset: 3px; }
+.sec-title { font-weight: 700; }
+.sec-note { color: var(--muted); font-size: 14px; grid-column: 1; }
+.sec-count { grid-row: 1 / span 2; grid-column: 2; align-self: center; color: var(--muted); font-size: 14px; white-space: nowrap; }
+.sections-head { margin: 40px 0 0; font-size: 15px; color: var(--muted); font-weight: 500; }
+.sections-head + .sections { margin-top: 8px; }
+
+/* quiz */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); padding: 16px 0 12px; }
+.topline { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 14px; color: var(--muted); }
+.topline b { color: var(--ink); font-weight: 700; }
+.progress { height: 6px; background: var(--line); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+.progress > span { display: block; height: 100%; background: var(--ink); width: 0; transition: width .3s ease; }
+.qtext { font-size: clamp(20px, 3.4vw, 25px); font-weight: 700; line-height: 1.3; margin: 18px 0 16px; letter-spacing: -0.01em; }
+.qtype { font-size: 14px; color: var(--muted); margin: 0 0 16px; }
+
+.code {
+  background: var(--code-bg); color: var(--code-ink); border-radius: 6px;
+  font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 14px; line-height: 1.6;
+  overflow-x: auto; margin: 0 0 20px; padding: 12px 0;
+}
+.code ol { list-style: none; margin: 0; padding: 0; counter-reset: ln; min-width: max-content; }
+.code li { counter-increment: ln; padding: 0 16px 0 0; white-space: pre; display: flex; }
+.code li::before { content: counter(ln); width: 3.2em; flex: none; text-align: right; padding-right: 1.2em; color: var(--code-num); user-select: none; }
+.code .kw { color: var(--tok-kw); }
+.code .str { color: var(--tok-str); }
+.code .num { color: var(--tok-num); }
+.code .com { color: var(--tok-com); font-style: italic; }
+.code.pick li { cursor: pointer; }
+.code.pick li:hover { background: rgba(255,255,255,.06); }
+.code li.chosen { background: rgba(159,215,255,.18); box-shadow: inset 3px 0 0 #9FD7FF; }
+.code li.is-ok { background: rgba(124,214,158,.2); box-shadow: inset 3px 0 0 #7CD69E; }
+.code li.is-bad { background: rgba(255,138,122,.2); box-shadow: inset 3px 0 0 #FF8A7A; }
+.code li:focus-visible { outline: 2px solid #9FD7FF; outline-offset: -2px; }
+
+.opts { display: grid; gap: 10px; margin: 0 0 20px; }
+.opt {
+  text-align: left; background: var(--surface); border: 2px solid var(--line); border-radius: 6px;
+  padding: 12px 16px; cursor: pointer; line-height: 1.4;
+}
+.opt:hover:not(:disabled) { border-color: var(--muted); }
+.opt[aria-pressed="true"] { border-color: var(--ink); background: var(--sel); }
+.opt.is-ok { border-color: var(--ok); background: var(--ok-bg); }
+.opt.is-bad { border-color: var(--bad); background: var(--bad-bg); }
+.opt:disabled { cursor: default; }
+
+.numrow { display: flex; gap: 10px; align-items: center; margin: 0 0 20px; }
+.numrow input {
+  font: inherit; font-size: 22px; font-weight: 700; width: 160px; padding: 10px 14px;
+  border: 2px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink);
+}
+.numrow input:focus { border-color: var(--ink); outline: none; }
+.numrow input.is-ok { border-color: var(--ok); background: var(--ok-bg); }
+.numrow input.is-bad { border-color: var(--bad); background: var(--bad-bg); }
+
+.order-pool, .order-seq { display: grid; gap: 8px; }
+.order-seq { margin: 0 0 12px; min-height: 48px; padding: 10px; border: 2px dashed var(--line); border-radius: 6px; counter-reset: step; }
+.order-seq:empty::before { content: "Натискай на пункти нижче в потрібному порядку"; color: var(--muted); font-size: 15px; padding: 4px 6px; }
+.chip {
+  text-align: left; background: var(--surface); border: 2px solid var(--line); border-radius: 6px; padding: 10px 14px; cursor: pointer;
+  font-family: inherit;
+}
+.order-seq .chip { counter-increment: step; display: flex; gap: 10px; }
+.order-seq .chip::before { content: counter(step) "."; font-weight: 700; color: var(--muted); }
+.chip:hover:not(:disabled) { border-color: var(--muted); }
+.chip.is-ok { border-color: var(--ok); background: var(--ok-bg); }
+.chip.is-bad { border-color: var(--bad); background: var(--bad-bg); }
+.order-tools { margin: 0 0 20px; }
+
+.demo { background: var(--surface); border: 2px solid var(--line); border-radius: 6px; padding: 14px; margin: 0 0 20px; }
+.demo canvas { display: block; width: 100%; height: auto; border-radius: 4px; background: #0C222C; touch-action: none; }
+.demo-grid { display: grid; grid-template-columns: minmax(120px, 200px) 1fr; gap: 16px; align-items: start; }
+.readout { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; font-size: 15px; margin-top: 12px; }
+.readout dt { color: var(--muted); font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 14px; }
+.readout dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.slider { margin-bottom: 14px; }
+.slider label { display: flex; justify-content: space-between; font-size: 15px; margin-bottom: 4px; }
+.slider input { width: 100%; accent-color: var(--ink); }
+@media (max-width: 520px) { .demo-grid { grid-template-columns: 1fr; } .demo-grid canvas { max-width: 180px; } }
+
+.hint { font-size: 15px; color: var(--muted); margin: -8px 0 20px; }
+.fb { border-radius: 6px; padding: 14px 16px; margin: 0 0 20px; border-left: 5px solid; background: var(--surface); }
+.fb.ok { border-color: var(--ok); }
+.fb.bad { border-color: var(--bad); }
+.fb h3 { margin: 0 0 4px; font-size: 17px; }
+.fb.ok h3 { color: var(--ok); }
+.fb.bad h3 { color: var(--bad); }
+.fb p { margin: 6px 0 0; }
+.fb .correct { font-weight: 700; }
+.actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+/* results */
+.big { font-size: clamp(56px, 14vw, 104px); font-weight: 800; line-height: 1; letter-spacing: -0.03em; margin: 28px 0 6px; }
+.big small { font-size: .35em; font-weight: 700; color: var(--muted); letter-spacing: 0; }
+.res-list { list-style: none; padding: 0; margin: 28px 0; border-top: 2px solid var(--ink); }
+.res-list li { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.res-bar { grid-column: 1 / -1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.res-bar span { display: block; height: 100%; background: var(--ink); }
+.res-score { font-variant-numeric: tabular-nums; color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) { .progress > span { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section id="screen-start" class="hero">
+    <canvas id="scene" class="scene" width="1000" height="440" aria-label="Сцена гри: нічне місто, двоє гравців на дахах"></canvas>
+    <div class="scene-bar">
+      <span>Ця сцена намальована тим самим кодом, який розбирає тест.</span>
+      <button class="textbtn" id="regen" type="button">Згенерувати інше місто</button>
+    </div>
+    <h1>Як працює код гри «Горили»</h1>
+    <p class="lead" id="lead"></p>
+    <button class="btn" id="start-all" type="button">Почати весь тест</button>
+    <p class="sections-head">Або пройди окрему частину коду</p>
+    <ul class="sections" id="sections"></ul>
+  </section>
+
+  <section id="screen-quiz" class="hidden">
+    <div class="topbar">
+      <div class="topline"><b id="q-section"></b><span id="q-count"></span></div>
+      <div class="progress"><span id="q-progress"></span></div>
+    </div>
+    <div id="q-area"></div>
+    <div class="actions">
+      <button class="btn" id="q-main" type="button">Перевірити</button>
+      <button class="textbtn" id="q-quit" type="button">Вийти на початок</button>
+    </div>
+  </section>
+
+  <section id="screen-result" class="hidden">
+    <div class="big" id="r-big"></div>
+    <p class="lead" id="r-text"></p>
+    <ul class="res-list" id="r-list"></ul>
+    <div class="actions">
+      <button class="btn" id="r-wrong" type="button">Повторити помилкові питання</button>
+      <button class="btn ghost" id="r-again" type="button">Пройти ще раз</button>
+      <button class="textbtn" id="r-home" type="button">На початок</button>
+    </div>
+  </section>
+
+</div>
+<script>
+const SECTIONS = [
+  { id: "state", title: "Стан гри та змінні", note: "state, isDragging, пошук елементів на сторінці" },
+  { id: "town", title: "Генерація міста", note: "generate_town і generateBuilding" },
+  { id: "canvas", title: "Canvas і система координат", note: "draw, save/restore, перевертання осі Y" },
+  { id: "windows", title: "Будинки й вікна", note: "drawBuildings: поверхи, кімнати, індекси" },
+  { id: "player", title: "Малювання гравця", note: "drawPlayer, тіло, руки, обличчя" },
+  { id: "bomb", title: "Бомба і прицілювання", note: "initeBombPosition, drawBomb, область захоплення" },
+  { id: "mouse", title: "Події миші", note: "mousedown, mousemove, вектор натягу" },
+  { id: "math", title: "Математика setInfo", note: "швидкість, кут, радіани і градуси" },
+  { id: "html", title: "HTML і CSS", note: "розмітка, позиціонування, розмір canvas" }
+];
+
+const QUESTIONS = [
+  // ---------- Стан гри ----------
+  {
+    s: "state", type: "choice",
+    q: "Яке значення має state.phase одразу після запуску гри?",
+    code: [
+      'let state = {',
+      '  phase: "aiming",',
+      '  currentPlayer: 1,',
+      '  bomb: { /* ... */ },',
+      '  buildings: []',
+      '};'
+    ],
+    options: ['"aiming"', '"throwing"', 'undefined', '1'],
+    answer: 0,
+    explain: 'Фаза задана прямо в об\'єкті state як "aiming", тобто прицілювання. Саме цю фазу перевіряють обробник mousedown і функція drawLeftArm.'
+  },
+  {
+    s: "state", type: "choice",
+    q: "Що зберігає state.bomb.velocity під час прицілювання?",
+    code: [
+      'state.bomb.velocity.x = -DeltaX;',
+      'state.bomb.velocity.y = DeltaY;'
+    ],
+    options: [
+      "Вектор кидка, обчислений з того, наскільки гравець відтягнув мишу",
+      "Позицію курсора миші на екрані",
+      "Координати бомби на canvas",
+      "Кут у градусах і силу кидка"
+    ],
+    answer: 0,
+    explain: "velocity — це пара чисел x і y, яка рахується зі зміщення миші від точки натискання. Цей вектор далі використовують drawBomb (лінія і зсув бомби) та drawLeftArm (положення кисті)."
+  },
+  {
+    s: "state", type: "choice",
+    q: "Для чого потрібна змінна isDragging?",
+    code: [
+      'bombGrabArea.addEventListener("mousedown", function (event) {',
+      '  if (state.phase === "aiming") {',
+      '    isDragging = true;',
+      '    // ...',
+      '  }',
+      '});',
+      'window.addEventListener("mousemove", function (event) {',
+      '  if (isDragging) {',
+      '    // ...',
+      '  }',
+      '});'
+    ],
+    options: [
+      "Вона показує, що гравець зараз тягне бомбу, і лише тоді mousemove змінює вектор",
+      "Вона вмикає курсор grab над бомбою",
+      "Вона зберігає номер гравця, який зараз ходить",
+      "Вона дозволяє заново згенерувати місто"
+    ],
+    answer: 0,
+    explain: "Рух миші відбувається постійно, але вектор має змінюватися лише після натискання на бомбу. mousedown ставить isDragging = true, а mousemove щось робить тільки коли цей прапорець увімкнено."
+  },
+  {
+    s: "state", type: "choice",
+    q: 'Який елемент знайде document.querySelector("#info-left .angle")?',
+    code: [
+      'const angle1 = document.querySelector("#info-left .angle");'
+    ],
+    options: [
+      "Елемент з класом angle, що лежить усередині блоку з id info-left",
+      "Усі елементи з класом angle на сторінці",
+      "Елемент з id angle",
+      "Сам блок info-left"
+    ],
+    answer: 0,
+    explain: "Селектор \"#info-left .angle\" означає: знайди елемент з класом angle всередині елемента з id info-left. querySelector повертає перший такий елемент, тут це span у лівій панелі."
+  },
+  {
+    s: "state", type: "line",
+    q: "Клікни рядок, де отримується об'єкт, через який виконується все малювання на canvas.",
+    code: [
+      'const game = document.getElementById("game");',
+      'const ctx = game.getContext("2d");',
+      'const bombGrabArea = document.getElementById("bomb-grab-area");',
+      'const angle1 = document.querySelector("#info-left .angle");',
+      'const velocity1 = document.querySelector("#info-left .velocity");'
+    ],
+    answer: 1,
+    explain: "game — це сам елемент canvas, а ctx — його 2D-контекст. Усі команди малювання (fillRect, arc, stroke, translate тощо) викликаються саме на ctx."
+  },
+
+  // ---------- Генерація міста ----------
+  {
+    s: "town", type: "choice",
+    q: "Якої ширини може бути будинок, створений generateBuilding?",
+    code: [
+      'const minWidth = 80;',
+      'const maxWidth = 130;',
+      'const width = minWidth + Math.random() * (maxWidth - minWidth);'
+    ],
+    options: [
+      "Від 80 до майже 130 (саме 130 не досягається)",
+      "Рівно 80 або рівно 130",
+      "Від 0 до 130",
+      "Від 80 до 210"
+    ],
+    answer: 0,
+    explain: "Math.random() дає число від 0 (включно) до 1 (не включно). Тож до 80 додається від 0 до майже 50, і ширина лежить у межах від 80 до майже 130."
+  },
+  {
+    s: "town", type: "number",
+    q: "Перший будинок має x = 0 і ширину 100. Яким буде x другого будинку?",
+    code: [
+      'let x = 0;',
+      'const gap = 4;',
+      'while (x < game.width) {',
+      '  const building = generateBuilding(x);',
+      '  state.buildings.push(building);',
+      '  x = x + building.width + gap;',
+      '}'
+    ],
+    answer: 104,
+    explain: "Після кожного будинку x збільшується на його ширину і ще на проміжок gap = 4. Отже 0 + 100 + 4 = 104."
+  },
+  {
+    s: "town", type: "choice",
+    q: "Навіщо на початку generate_town стоїть рядок state.buildings.length = 0?",
+    code: [
+      'function generate_town() {',
+      '  state.buildings.length = 0;',
+      '  // ...',
+      '}'
+    ],
+    options: [
+      "Щоб очистити масив і будувати місто заново, без старих будинків",
+      "Щоб задати, скільки будинків буде в місті",
+      "Щоб зупинити цикл while",
+      "Щоб скинути координату x у нуль"
+    ],
+    answer: 0,
+    explain: "Присвоєння length = 0 видаляє всі елементи масиву. Так кожен виклик generate_town починає з порожнього міста, а не дописує будинки до старих."
+  },
+  {
+    s: "town", type: "choice",
+    q: "Коли цикл while у generate_town припиняє додавати будинки?",
+    code: [
+      'while (x < game.width) {',
+      '  const building = generateBuilding(x);',
+      '  state.buildings.push(building);',
+      '  x = x + building.width + gap;',
+      '}'
+    ],
+    options: [
+      "Коли початок наступного будинку x стає не меншим за ширину canvas",
+      "Рівно після 10 будинків",
+      "Коли сума ширин точно дорівнює ширині canvas",
+      "Коли трапляється будинок вищий за 300"
+    ],
+    answer: 0,
+    explain: "Умова перевіряє лише, чи x ще менший за ширину canvas. Останній будинок починається всередині canvas, але може частково виходити за правий край, і ця частина просто не видна."
+  },
+  {
+    s: "town", type: "choice",
+    q: "Яка ймовірність, що окреме вікно отримає світлий колір #F3EFEC?",
+    code: [
+      'if (Math.random() < 0.5) {',
+      '  light = firstWindowColor;  // "#020247"',
+      '} else {',
+      '  light = secondWindowColor; // "#F3EFEC"',
+      '}'
+    ],
+    options: ["Приблизно 50%", "Приблизно 20%", "100%", "Залежить від висоти будинку"],
+    answer: 0,
+    explain: "Math.random() менше за 0.5 приблизно в половині випадків, тоді вікно темне. В іншій половині випадків воно світле."
+  },
+  {
+    s: "town", type: "order",
+    q: "Розстав дії функції generateBuilding у порядку, в якому вони виконуються.",
+    items: [
+      "Обчислити випадкові width і height",
+      "Створити порожній масив windowColors",
+      "50 разів вибрати колір вікна і додати в масив",
+      "Повернути об'єкт { x, width, height, windowColors }"
+    ],
+    explain: "Спочатку рахуються розміри, потім створюється масив кольорів і заповнюється в циклі на 50 кроків, і наприкінці функція повертає готовий об'єкт будинку."
+  },
+
+  // ---------- Canvas і координати ----------
+  {
+    s: "canvas", type: "choice",
+    q: "Де опиняється точка (0, 0) і куди росте Y після цих двох рядків?",
+    code: [
+      'ctx.translate(0, game.height);',
+      'ctx.scale(1, -1);'
+    ],
+    options: [
+      "У лівому нижньому куті, Y росте вгору",
+      "У лівому верхньому куті, Y росте вниз",
+      "У центрі canvas, Y росте вгору",
+      "У правому нижньому куті, Y росте вліво"
+    ],
+    answer: 0,
+    explain: "translate переносить початок координат на висоту canvas, тобто вниз. scale(1, -1) перевертає вісь Y. Тепер будинки можна малювати від землі: y = 0 — низ екрана."
+  },
+  {
+    s: "canvas", type: "choice",
+    q: "Навіщо draw() обгортає малювання в ctx.save() і ctx.restore()?",
+    code: [
+      'function draw() {',
+      '  drawBackground();',
+      '  ctx.save();',
+      '  ctx.translate(0, game.height);',
+      '  ctx.scale(1, -1);',
+      '  drawBuildings();',
+      '  drawPlayer(1);',
+      '  drawPlayer(2);',
+      '  drawBomb();',
+      '  ctx.restore();',
+      '}'
+    ],
+    options: [
+      "Щоб translate і scale діяли тільки на будинки, гравців і бомбу, а наступний виклик draw() починав зі звичайних координат",
+      "Щоб зберегти картинку у файл",
+      "Щоб очистити canvas перед малюванням",
+      "Щоб запам'ятати об'єкт state"
+    ],
+    answer: 0,
+    explain: "save() запам'ятовує поточні налаштування контексту, restore() повертає їх. Без цього кожен виклик draw() додавав би ще один translate і scale, і сцена з'їжджала б."
+  },
+  {
+    s: "canvas", type: "choice",
+    q: "Чому drawBackground() викликається до перевертання координат?",
+    code: [
+      'function drawBackground() {',
+      '  ctx.fillStyle = "#0C222C";',
+      '  ctx.fillRect(0, 0, game.width, game.height);',
+      '  ctx.fillStyle = "#ECEAEA";',
+      '  ctx.arc(750, 70, 60, 0, 2 * Math.PI);',
+      '  ctx.fill();',
+      '}'
+    ],
+    options: [
+      "Фон має лежати під усім іншим, а місяць задано у звичайних координатах: 70 px від верхнього краю",
+      "Бо fillRect не працює після scale",
+      "Бо інакше місяць буде квадратним",
+      "Порядок викликів на canvas ні на що не впливає"
+    ],
+    answer: 0,
+    explain: "На canvas те, що намальовано пізніше, лежить зверху, тому фон малюється першим. До перевертання Y росте вниз, отже місяць з y = 70 стоїть біля верхнього краю, як і має бути на небі."
+  },
+  {
+    s: "canvas", type: "number",
+    q: "Висота canvas 800 px, будинок має висоту 200. На якій відстані (у px) від верхнього краю екрана буде дах цього будинку?",
+    code: [
+      'ctx.translate(0, game.height);',
+      'ctx.scale(1, -1);',
+      '// ...',
+      'ctx.fillRect(building.x, 0, building.width, building.height);'
+    ],
+    answer: 600,
+    explain: "Будинок малюється від y = 0 (низ екрана) вгору на 200. Від верху екрана до даху залишається 800 − 200 = 600 px."
+  },
+  {
+    s: "canvas", type: "choice",
+    q: 'Що повертає game.getContext("2d")?',
+    code: ['const ctx = game.getContext("2d");'],
+    options: [
+      "Об'єкт з методами 2D-малювання: fillRect, arc, stroke, translate…",
+      "Сам елемент canvas",
+      "Ширину і висоту canvas",
+      "Масив кольорів пікселів"
+    ],
+    answer: 0,
+    explain: "Контекст — це «пензель» для canvas. Усе малювання в грі йде через нього."
+  },
+
+  // ---------- Будинки й вікна ----------
+  {
+    s: "windows", type: "number",
+    q: "Будинок має ширину 100 і висоту 200. Скільки всього вікон на ньому намалюється?",
+    code: [
+      'const windowWidth = 20;',
+      'const windowHeight = 20;',
+      'const gap = 16;',
+      'const numberOfFloors = Math.floor(',
+      '  (building.height - gap) / (windowHeight + gap)',
+      ');',
+      'const numberOfRooms = Math.floor(',
+      '  (building.width - gap) / (windowWidth + gap)',
+      ');'
+    ],
+    answer: 10,
+    explain: "Поверхи: (200 − 16) / 36 = 5.11, після Math.floor виходить 5. Кімнати: (100 − 16) / 36 = 2.33, тобто 2. Разом 5 × 2 = 10 вікон."
+  },
+  {
+    s: "windows", type: "number",
+    q: "У будинку 3 кімнати на поверсі. Який windowIndex має вікно на поверсі 2, у кімнаті 1 (рахунок з нуля)?",
+    code: [
+      'const windowIndex = floor * numberOfRooms + room;',
+      'const lightIsOn = building.windowColors[windowIndex];'
+    ],
+    answer: 7,
+    explain: "2 × 3 + 1 = 7. Кожен поверх «займає» в масиві стільки елементів, скільки на ньому кімнат, тому всі вікна будинку отримують різні номери: 0, 1, 2 на першому поверсі, 3, 4, 5 на другому і так далі."
+  },
+  {
+    s: "windows", type: "number",
+    q: "На якій висоті від низу будинку (windowY) починається вікно поверху 2?",
+    code: [
+      'const windowY = gap + floor * (windowHeight + gap);',
+      '// gap = 16, windowHeight = 20'
+    ],
+    answer: 88,
+    explain: "16 + 2 × (20 + 16) = 16 + 72 = 88. Кожен поверх піднімає вікно на висоту вікна плюс проміжок."
+  },
+  {
+    s: "windows", type: "number",
+    q: "Будинок стоїть на x = 200. Яке windowX має вікно кімнати 1?",
+    code: [
+      'const windowX = building.x + gap + room * (windowWidth + gap);',
+      '// gap = 16, windowWidth = 20'
+    ],
+    answer: 252,
+    explain: "200 + 16 + 1 × 36 = 252. Координата вікна рахується від лівого краю самого будинку, тому до неї додається building.x."
+  },
+  {
+    s: "windows", type: "choice",
+    q: "Чому в формулі кількості поверхів від висоти спочатку віднімається gap?",
+    code: [
+      'const numberOfFloors = Math.floor(',
+      '  (building.height - gap) / (windowHeight + gap)',
+      ');'
+    ],
+    options: [
+      "Щоб над верхнім рядом вікон теж лишився відступ 16 px, як між вікнами",
+      "Щоб будинок став нижчим",
+      "Щоб прибрати дробову частину",
+      "Щоб вікна малювалися зверху вниз"
+    ],
+    answer: 0,
+    explain: "Кожен поверх займає 20 px вікна і 16 px відступу під ним. Ще один відступ gap потрібен над верхнім вікном, тому його віднімають від висоти заздалегідь."
+  },
+  {
+    s: "windows", type: "choice",
+    q: "Чому масиву windowColors з 50 кольорів вистачає для будь-якого будинку?",
+    code: [
+      'for (let index = 0; index < 50; index++) { /* ... */ }',
+      '// висота: 80…300, ширина: 80…130'
+    ],
+    options: [
+      "Найбільший будинок має до 7 поверхів × 3 кімнати = 21 вікно, це менше за 50",
+      "Бо в кожному будинку рівно 50 вікон",
+      "Бо зайві вікна отримують колір автоматично",
+      "Бо масив сам розширюється під потрібний розмір"
+    ],
+    answer: 0,
+    explain: "Висота менша за 300: (300 − 16) / 36 ≈ 7.9, отже не більше 7 поверхів. Ширина менша за 130: (130 − 16) / 36 ≈ 3.2, отже не більше 3 кімнат. Максимум 21 вікно, тож індекси ніколи не виходять за межі 50."
+  },
+  {
+    s: "windows", type: "demo", demo: "building",
+    q: "Налаштуй будинок так, щоб у ньому було рівно 4 поверхи і 3 кімнати на поверсі.",
+    explain: "3 кімнати виходять при ширині від 124: (124 − 16) / 36 = 3. 4 поверхи виходять при висоті від 160 до 195: (160 − 16) / 36 = 4, а з 196 уже 5 поверхів.",
+    check: (v) => v.floors === 4 && v.rooms === 3
+  },
+
+  // ---------- Гравець ----------
+  {
+    s: "player", type: "choice",
+    q: "На яких будинках стоять гравці?",
+    code: [
+      'if (playerNumber === 1) {',
+      '  building = state.buildings[1];',
+      '} else {',
+      '  building = state.buildings[state.buildings.length - 2];',
+      '}'
+    ],
+    options: [
+      "Гравець 1 на другому будинку зліва, гравець 2 на передостанньому",
+      "Гравець 1 на першому, гравець 2 на останньому",
+      "На випадкових будинках",
+      "Обидва на будинку в центрі"
+    ],
+    answer: 0,
+    explain: "Індекси масиву рахуються з нуля, тож buildings[1] — другий будинок. buildings[length − 2] — передостанній. Крайні будинки лишаються вільними, а гравці не стоять упритул до країв екрана."
+  },
+  {
+    s: "player", type: "number",
+    q: "Гравець стоїть на будинку з x = 100 і width = 120. Яке значення playerX?",
+    code: [
+      'const playerX = building.x + building.width / 2;',
+      'const playerY = building.height;'
+    ],
+    answer: 160,
+    explain: "100 + 120 / 2 = 160. Це середина даху по горизонталі, а playerY дорівнює висоті будинку, тобто рівню даху."
+  },
+  {
+    s: "player", type: "choice",
+    q: "Навіщо в drawPlayer викликається ctx.translate(playerX, playerY)?",
+    code: [
+      'ctx.save();',
+      'ctx.translate(playerX, playerY);',
+      'drawPlayerBody();',
+      'drawLeftArm(playerNumber);',
+      'drawRightArm(playerNumber);',
+      'drawPlayerFace();',
+      'ctx.restore();'
+    ],
+    options: [
+      "Щоб усі частини тіла задавати відносно точки під ногами гравця, однаково для обох гравців",
+      "Щоб дзеркально відобразити другого гравця",
+      "Щоб гравець рухався під час гри",
+      "Щоб збільшити гравця"
+    ],
+    answer: 0,
+    explain: "Після translate точка (0, 0) — це середина даху під ногами гравця. Тому в drawPlayerBody координати на кшталт (−20, 0) або (0, 84) підходять для будь-якого будинку."
+  },
+  {
+    s: "player", type: "order",
+    q: "У якому порядку drawPlayer малює частини гравця?",
+    items: ["drawPlayerBody()", "drawLeftArm()", "drawRightArm()", "drawPlayerFace()"],
+    explain: "Спочатку тіло, потім руки, і останнім обличчя. Оскільки на canvas пізніше намальоване лежить зверху, обличчя видно поверх чорного тіла."
+  },
+  {
+    s: "player", type: "choice",
+    q: "Що означають числа в ctx.quadraticCurveTo(-44, 45, -28, 12)?",
+    code: [
+      'ctx.moveTo(-14, 50);',
+      'ctx.quadraticCurveTo(-44, 45, -28, 12);',
+      'ctx.stroke();'
+    ],
+    options: [
+      "(−44, 45) — контрольна точка, яка вигинає лінію, (−28, 12) — кінець руки",
+      "Дві точки, через які лінія обов'язково проходить",
+      "Початок і кінець прямої лінії",
+      "Ширина і висота руки"
+    ],
+    answer: 0,
+    explain: "Крива починається там, де стоїть «перо» після moveTo (плече −14, 50). Вона тягнеться до контрольної точки, але не проходить через неї, і закінчується в останній парі координат."
+  },
+  {
+    s: "player", type: "choice",
+    q: 'Що робить ctx.lineCap = "round" для рук гравця?',
+    code: [
+      'ctx.lineWidth = 18;',
+      'ctx.lineCap = "round";'
+    ],
+    options: [
+      "Закруглює кінці товстої лінії, тому руки мають заокруглені кисті",
+      "Робить з лінії коло",
+      "Згладжує вигин кривої",
+      "Заповнює руку кольором"
+    ],
+    answer: 0,
+    explain: "lineCap керує виглядом кінців лінії. Для лінії товщиною 18 px різниця між квадратним і круглим кінцем дуже помітна."
+  },
+  {
+    s: "player", type: "choice",
+    q: "Коли ліва рука гравця малюється піднятою, з бомбою?",
+    code: [
+      'if (state.phase === "aiming" && state.currentPlayer === 1 && player === 1) {',
+      '  ctx.quadraticCurveTo(-44, 63, -28 - state.bomb.velocity.x / 6.25,',
+      '                       107 - state.bomb.velocity.y / 6.25);',
+      '} else {',
+      '  ctx.quadraticCurveTo(-44, 45, -28, 12);',
+      '}'
+    ],
+    options: [
+      "Коли фаза aiming, ходить гравець 1 і зараз малюється саме гравець 1",
+      "Завжди, для обох гравців",
+      "Лише поки користувач тягне мишу",
+      "Коли малюється гравець 2"
+    ],
+    answer: 0,
+    explain: "Мають виконатися всі три умови одночасно (оператор &&). Під час прицілювання рука піднята навіть без натягу: при velocity = 0 кисть стоїть у точці (−28, 107)."
+  },
+
+  // ---------- Бомба ----------
+  {
+    s: "bomb", type: "choice",
+    q: "Чому в initeBombPosition зсув від гравця 1 саме (−28, 107)?",
+    code: [
+      'const gorilaX = building.x + building.width / 2;',
+      'const gorilaY = building.height;',
+      'gorilaHandOfSetX = -28; // для гравця 1',
+      'const gorilaHandOfSetY = 107;',
+      'state.bomb.x = gorilaX + gorilaHandOfSetX;',
+      'state.bomb.y = gorilaY + gorilaHandOfSetY;'
+    ],
+    options: [
+      "Це кінець піднятої лівої руки без натягу, тож бомба опиняється в руці",
+      "Це випадкові числа, підібрані на око",
+      "Це радіус бомби",
+      "Це відступ від краю екрана"
+    ],
+    answer: 0,
+    explain: "У drawLeftArm кисть піднятої руки має координати (−28 − vx / 6.25, 107 − vy / 6.25). Поки натягу немає, це (−28, 107), і бомба стоїть саме там."
+  },
+  {
+    s: "bomb", type: "choice",
+    q: "Що повертає state.buildings.at(-2)?",
+    code: ['building = state.buildings.at(-2);'],
+    options: [
+      "Передостанній будинок, те саме, що buildings[buildings.length - 2]",
+      "Другий будинок з початку",
+      "Два останні будинки",
+      "undefined, бо індекс від'ємний"
+    ],
+    answer: 0,
+    explain: "Метод at() приймає від'ємні індекси і рахує їх з кінця: at(−1) — останній, at(−2) — передостанній. Тому initeBombPosition і drawPlayer беруть для гравця 2 один і той самий будинок."
+  },
+  {
+    s: "bomb", type: "number",
+    q: "Гравець відтягнув мишу на 125 px вправо, не рухаючи її вертикально. На скільки пікселів вправо зміститься бомба на екрані?",
+    code: [
+      'state.bomb.velocity.x = -DeltaX;',
+      '// ...',
+      'ctx.translate(-state.bomb.velocity.x / 6.25, -state.bomb.velocity.y / 6.25);'
+    ],
+    answer: 20,
+    explain: "velocity.x = −125. Зсув дорівнює −(−125) / 6.25 = +20. Бомба рухається за мишею, але в 6.25 раза менше."
+  },
+  {
+    s: "bomb", type: "choice",
+    q: "Гравець тягне мишу вліво і вниз. Куди вказує лінія, яку drawBomb малює від бомби?",
+    code: [
+      'state.bomb.velocity.x = -DeltaX;',
+      'state.bomb.velocity.y = DeltaY;',
+      '// ... у drawBomb (вісь Y перевернута, росте вгору):',
+      'ctx.moveTo(0, 0);',
+      'ctx.lineTo(state.bomb.velocity.x, state.bomb.velocity.y);'
+    ],
+    options: [
+      "Вправо і вгору, протилежно до натягу",
+      "Вліво і вниз, туди ж, куди тягнуть",
+      "Завжди вертикально вгору",
+      "Вліво і вгору"
+    ],
+    answer: 0,
+    explain: "Вліво означає DeltaX < 0, тож velocity.x > 0, це вправо. Вниз означає DeltaY > 0, тож velocity.y > 0, а в перевернутих координатах це вгору. Як у рогатці: тягнеш назад, лінія показує вперед."
+  },
+  {
+    s: "bomb", type: "choice",
+    q: "Навіщо зсув бомби в drawBomb такий самий (−velocity / 6.25), як зсув кисті в drawLeftArm?",
+    code: [
+      '// drawLeftArm:',
+      '-28 - state.bomb.velocity.x / 6.25,',
+      '107 - state.bomb.velocity.y / 6.25',
+      '// drawBomb:',
+      'ctx.translate(-state.bomb.velocity.x / 6.25, -state.bomb.velocity.y / 6.25);'
+    ],
+    options: [
+      "Щоб під час натягу бомба рухалася разом з кистю і залишалася в руці",
+      "Щоб бомба рухалася назустріч руці",
+      "Щоб бомба оберталася",
+      "Це збіг, числа могли б бути будь-якими"
+    ],
+    answer: 0,
+    explain: "Бомба стоїть у точці кисті (−28, 107). Якщо рука і бомба зміщуються на однаковий вектор, бомба весь час лишається в руці."
+  },
+  {
+    s: "bomb", type: "number",
+    q: "Після initeBombPosition маємо state.bomb.x = 300. Яке число опиниться в bombGrabArea.style.left (без px)?",
+    code: [
+      'const grabAreaRadius = 15;',
+      'const left = state.bomb.x - grabAreaRadius;',
+      'const bottom = state.bomb.y - grabAreaRadius;',
+      'bombGrabArea.style.left = `${left}px`;',
+      'bombGrabArea.style.bottom = `${bottom}px`;'
+    ],
+    answer: 285,
+    explain: "300 − 15 = 285. Область захоплення — коло 30×30, тому її лівий край ставиться на радіус лівіше від центру бомби, і центр кола збігається з бомбою."
+  },
+  {
+    s: "bomb", type: "choice",
+    q: "Чому положення bombGrabArea задається через style.bottom, а не style.top?",
+    code: [
+      'const bottom = state.bomb.y - grabAreaRadius;',
+      'bombGrabArea.style.bottom = `${bottom}px`;'
+    ],
+    options: [
+      "bomb.y рахується від низу (вісь Y у грі перевернута), і CSS bottom теж рахує від низу",
+      "Бо top у CSS не працює з position: absolute",
+      "Бо bottom швидше малюється",
+      "Щоб область була під бомбою, а не на ній"
+    ],
+    answer: 0,
+    explain: "Координати гри відраховуються від низу екрана. Властивість bottom теж відміряє відстань від нижнього краю, тож число можна підставити без перерахунку."
+  },
+
+  // ---------- Миша ----------
+  {
+    s: "mouse", type: "choice",
+    q: "Чому mousedown слухається на bombGrabArea, а mousemove — на window?",
+    code: [
+      'bombGrabArea.addEventListener("mousedown", function (event) { /* ... */ });',
+      'window.addEventListener("mousemove", function (event) { /* ... */ });'
+    ],
+    options: [
+      "Почати тягнути можна лише з бомби, а рух треба відстежувати навіть тоді, коли курсор вийшов за межі маленького кола",
+      "Бо mousemove не працює на div",
+      "Бо window спрацьовує раніше за div",
+      "Так зроблено випадково, різниці немає"
+    ],
+    answer: 0,
+    explain: "Коло захоплення має лише 30 px. Під час натягу курсор швидко виходить за його межі, тому рух слухається на всьому вікні."
+  },
+  {
+    s: "mouse", type: "choice",
+    q: "Що зберігають dragStartX і dragStartY?",
+    code: [
+      'dragStartX = event.clientX;',
+      'dragStartY = event.clientY;',
+      '// ... у mousemove:',
+      'let DeltaX = event.clientX - dragStartX;',
+      'let DeltaY = event.clientY - dragStartY;'
+    ],
+    options: [
+      "Координати курсора в момент натискання, від них рахується зміщення",
+      "Координати бомби на canvas",
+      "Останню позицію курсора перед рухом",
+      "Центр екрана"
+    ],
+    answer: 0,
+    explain: "DeltaX і DeltaY показують, наскільки курсор відійшов від точки, де гравець натиснув на бомбу. Від цього і залежить сила натягу."
+  },
+  {
+    s: "mouse", type: "choice",
+    q: "Чому velocity.x = −DeltaX (з мінусом), а velocity.y = DeltaY (без мінуса)?",
+    code: [
+      'state.bomb.velocity.x = -DeltaX;',
+      'state.bomb.velocity.y = DeltaY;'
+    ],
+    options: [
+      "Екранний Y росте вниз, а в грі вгору, тож знак Y перевертається сам. Для X напрямки збігаються, і мінус потрібен, щоб вектор був протилежний натягу",
+      "Бо по вертикалі кидати не можна",
+      "Бо Y на екрані завжди додатний",
+      "Помилки немає, знак ні на що не впливає"
+    ],
+    answer: 0,
+    explain: "Вектор має вказувати протилежно до натягу. clientX і x у грі ростуть вправо, тож X перевертається явно. clientY росте вниз, а y у грі вгору, тож для Y перевертання вже відбулося через систему координат."
+  },
+  {
+    s: "mouse", type: "choice",
+    q: "Навіщо в обробнику mousemove викликається draw()?",
+    code: [
+      'state.bomb.velocity.x = -DeltaX;',
+      'state.bomb.velocity.y = DeltaY;',
+      'setInfo(DeltaX, DeltaY);',
+      'draw();'
+    ],
+    options: [
+      "Щоб перемалювати сцену з новим положенням руки, бомби і лінії",
+      "Щоб згенерувати нове місто",
+      "Щоб запустити бомбу",
+      "Щоб оновити цифри в панелі"
+    ],
+    answer: 0,
+    explain: "Canvas сам не оновлюється, коли змінюється state. Після кожної зміни вектора сцену треба намалювати заново. Цифри в панелі оновлює setInfo, а не draw."
+  },
+  {
+    s: "mouse", type: "line",
+    q: "Клікни рядок, який змінює вигляд курсора, коли гравець схопив бомбу.",
+    code: [
+      'bombGrabArea.addEventListener("mousedown", function (event) {',
+      '  if (state.phase === "aiming") {',
+      '    isDragging = true;',
+      '    dragStartX = event.clientX;',
+      '    dragStartY = event.clientY;',
+      '    document.body.style.cursor = "grabbing";',
+      '  }',
+      '});'
+    ],
+    answer: 5,
+    explain: "Курсор змінюється через style.cursor у body. Значення \"grabbing\" показує стиснуту руку. До натискання над колом діє CSS cursor: grab."
+  },
+  {
+    s: "mouse", type: "demo", demo: "drag",
+    q: "Потягни бомбу (червоне коло) так, щоб velocity було від 95 до 105, а angle — від 40° до 50°.",
+    hint: "Подумай, у який бік треба тягнути мишу по вертикалі, щоб DeltaY, а отже й кут, був додатним.",
+    explain: "Кут рахується як asin(DeltaY / довжина), тому для додатного кута мишу треба тягнути вниз. 45° виходить, коли зміщення по горизонталі і вертикалі однакові, приблизно по 71 px, бо √(71² + 71²) ≈ 100.",
+    check: (v) => v.velocity >= 95 && v.velocity <= 105 && v.angle >= 40 && v.angle <= 50
+  },
+
+  // ---------- Математика ----------
+  {
+    s: "math", type: "number",
+    q: "DeltaX = 30, DeltaY = 40. Яке число з'явиться в полі velocity?",
+    code: [
+      'const hipotenusa = Math.sqrt(DeltaX ** 2 + DeltaY ** 2);',
+      'velocity1.innerText = Math.round(hipotenusa);'
+    ],
+    answer: 50,
+    explain: "√(30² + 40²) = √(900 + 1600) = √2500 = 50. Це теорема Піфагора: довжина натягу як гіпотенуза."
+  },
+  {
+    s: "math", type: "number",
+    q: "Для тих самих DeltaX = 30, DeltaY = 40 яке число з'явиться в полі angle?",
+    code: [
+      'const angleRadius = Math.asin(DeltaY / hipotenusa);',
+      'const angledegrees = (angleRadius / Math.PI) * 180;',
+      'angle1.innerText = Math.round(angledegrees);'
+    ],
+    answer: 53,
+    explain: "asin(40 / 50) = asin(0.8) ≈ 0.927 радіана. У градусах це 0.927 / π × 180 ≈ 53.13, після округлення 53."
+  },
+  {
+    s: "math", type: "number",
+    q: "Гравець потягнув мишу рівно вниз на 60 px. Який кут покаже панель?",
+    code: [
+      'const hipotenusa = Math.sqrt(DeltaX ** 2 + DeltaY ** 2);',
+      'const angleRadius = Math.asin(DeltaY / hipotenusa);'
+    ],
+    answer: 90,
+    explain: "DeltaX = 0, DeltaY = 60, тож гіпотенуза теж 60. asin(60 / 60) = asin(1) = π / 2, тобто 90°."
+  },
+  {
+    s: "math", type: "choice",
+    q: "Що робить вираз (angleRadius / Math.PI) * 180?",
+    code: ['const angledegrees = (angleRadius / Math.PI) * 180;'],
+    options: [
+      "Переводить кут з радіан у градуси",
+      "Переводить градуси в радіани",
+      "Рахує довжину дуги",
+      "Округлює кут"
+    ],
+    answer: 0,
+    explain: "Math.asin повертає кут у радіанах. π радіан = 180°, тому ділення на π і множення на 180 дає градуси."
+  },
+  {
+    s: "math", type: "choice",
+    q: "Яка панель оновиться, коли state.currentPlayer дорівнює 1?",
+    code: [
+      'if (state.currentPlayer === 1) {',
+      '  angle1.innerText = Math.round(angledegrees);',
+      '  velocity1.innerText = Math.round(hipotenusa);',
+      '} else {',
+      '  angle2.innerText = Math.round(angledegrees);',
+      '  velocity2.innerText = Math.round(hipotenusa);',
+      '}'
+    ],
+    options: [
+      "Ліва, #info-left (angle1 і velocity1)",
+      "Права, #info-right",
+      "Обидві одночасно",
+      "Жодна"
+    ],
+    answer: 0,
+    explain: "angle1 і velocity1 знайдені в блоці #info-left. Гілка if для гравця 1 записує значення саме в них."
+  },
+  {
+    s: "math", type: "choice",
+    q: "Що насправді показує число velocity у панелі?",
+    code: ['const hipotenusa = Math.sqrt(DeltaX ** 2 + DeltaY ** 2);'],
+    options: [
+      "Довжину натягу: на скільки пікселів курсор відійшов від точки натискання",
+      "Швидкість руху курсора за секунду",
+      "Відстань від бомби до іншого гравця",
+      "Висоту бомби над землею"
+    ],
+    answer: 0,
+    explain: "Це відстань між точкою натискання і поточним положенням курсора. Чим сильніше натяг, тим більше число."
+  },
+
+  // ---------- HTML і CSS ----------
+  {
+    s: "html", type: "choice",
+    q: "Чому #bomb-grab-area виглядає як коло?",
+    code: [
+      '#bomb-grab-area {',
+      '  position: absolute;',
+      '  height: 30px;',
+      '  width: 30px;',
+      '  border-radius: 50%;',
+      '  background-color: tomato;',
+      '  cursor: grab;',
+      '}'
+    ],
+    options: [
+      "Квадрат 30×30 із border-radius: 50% перетворюється на коло",
+      "Бо div завжди круглий",
+      "Через cursor: grab",
+      "Через position: absolute"
+    ],
+    answer: 0,
+    explain: "border-radius: 50% закруглює кожен кут на половину сторони. Для квадрата це дає ідеальне коло."
+  },
+  {
+    s: "html", type: "choice",
+    q: "Навіщо в CSS правило * { margin: 0 }?",
+    code: ['* {', '  margin: 0;', '}'],
+    options: [
+      "Прибирає стандартні відступи браузера, щоб canvas починався точно в куті і координати сторінки збігалися з координатами гри",
+      "Робить усі елементи невидимими",
+      "Вирівнює текст по центру",
+      "Забороняє прокрутку сторінки"
+    ],
+    answer: 0,
+    explain: "У body за замовчуванням є відступ 8 px. Без цього правила canvas був би зсунутий, і область захоплення, розміщена через left і bottom, не збігалася б з бомбою."
+  },
+  {
+    s: "html", type: "choice",
+    q: "Чому панелі #info-left і #info-right видно поверх гри?",
+    code: [
+      '#info-left {',
+      '  position: absolute;',
+      '  top: 20px;',
+      '  left: 20px;',
+      '  color: white;',
+      '}'
+    ],
+    options: [
+      "Вони мають position: absolute, виходять із потоку документа і накладаються на canvas",
+      "Бо в них білий текст",
+      "Бо вони написані в HTML після canvas і тому стоять нижче на сторінці",
+      "Бо canvas прозорий"
+    ],
+    answer: 0,
+    explain: "Абсолютно позиціоновані елементи не займають місця в потоці і малюються поверх звичайних елементів. top і left задають їхнє місце відносно кута сторінки."
+  },
+  {
+    s: "html", type: "choice",
+    q: "У HTML у canvas вказано width=1000 height=1000. Якого розміру він буде після рядків нижче?",
+    code: [
+      'game.width = window.innerWidth;',
+      'game.height = window.innerHeight;'
+    ],
+    options: [
+      "Розміром з вікно браузера",
+      "1000 × 1000, бо HTML-атрибути важливіші",
+      "0 × 0",
+      "Удвічі більшим за вікно"
+    ],
+    answer: 0,
+    explain: "JavaScript перезаписує атрибути width і height. innerWidth та innerHeight — розміри видимої області вікна, тож гра розтягується на весь екран."
+  }
+];
+
+/* ================= helpers ================= */
+const $ = (id) => document.getElementById(id);
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+}
+function shuffle(a) {
+  const r = a.slice();
+  for (let i = r.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [r[i], r[j]] = [r[j], r[i]];
+  }
+  return r;
+}
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+const TOKEN = /(\/\/.*$|\/\*.*?\*\/)|("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|`(?:[^`\\]|\\.)*`)|\b(let|const|function|if|else|return|while|for|new|true|false|undefined)\b|\b(\d+(?:\.\d+)?)\b/g;
+function highlight(line) {
+  let out = "", last = 0, m;
+  TOKEN.lastIndex = 0;
+  while ((m = TOKEN.exec(line))) {
+    out += esc(line.slice(last, m.index));
+    const cls = m[1] ? "com" : m[2] ? "str" : m[3] ? "kw" : "num";
+    out += '<span class="' + cls + '">' + esc(m[0]) + "</span>";
+    last = m.index + m[0].length;
+  }
+  return out + esc(line.slice(last));
+}
+function codeBlock(lines, pickable) {
+  const pre = el("div", "code" + (pickable ? " pick" : ""));
+  const ol = el("ol");
+  lines.forEach((ln, i) => {
+    const li = el("li");
+    li.innerHTML = highlight(ln) || " ";
+    li.dataset.i = i;
+    if (pickable) { li.tabIndex = 0; li.setAttribute("role", "button"); }
+    ol.appendChild(li);
+  });
+  pre.appendChild(ol);
+  return pre;
+}
+function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+
+/* ================= game drawing (same logic as the game) ================= */
+function makeBuilding(x) {
+  const width = 80 + Math.random() * 50;
+  const height = 80 + Math.random() * 220;
+  const windowColors = [];
+  for (let i = 0; i < 50; i++) windowColors.push(Math.random() < 0.5 ? "#020247" : "#F3EFEC");
+  return { x, width, height, windowColors };
+}
+function drawBuilding(ctx, b) {
+  ctx.fillStyle = "#FF0000";
+  ctx.fillRect(b.x, 0, b.width, b.height);
+  const w = 20, h = 20, gap = 16;
+  const floors = Math.floor((b.height - gap) / (h + gap));
+  const rooms = Math.floor((b.width - gap) / (w + gap));
+  for (let f = 0; f < floors; f++) {
+    for (let r = 0; r < rooms; r++) {
+      ctx.fillStyle = b.windowColors[f * rooms + r];
+      ctx.fillRect(b.x + gap + r * (w + gap), gap + f * (h + gap), w, h);
+    }
+  }
+  return { floors, rooms };
+}
+function drawGorilla(ctx, b, raised) {
+  ctx.save();
+  ctx.translate(b.x + b.width / 2, b.height);
+  ctx.fillStyle = "#000000";
+  ctx.beginPath();
+  [[0,15],[-7,0],[-20,0],[-17,18],[-20,44],[-11,77],[0,84],[11,77],[20,44],[17,18],[20,0],[7,0]]
+    .forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)));
+  ctx.fill();
+  ctx.strokeStyle = "#000000"; ctx.lineWidth = 18; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(-14, 50);
+  if (raised) ctx.quadraticCurveTo(-44, 63, -28, 107); else ctx.quadraticCurveTo(-44, 45, -28, 12);
+  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(14, 50); ctx.quadraticCurveTo(44, 45, 28, 12); ctx.stroke();
+  ctx.fillStyle = "#8E2907";
+  ctx.beginPath();
+  ctx.arc(0, 62, 9, 0, 2 * Math.PI);
+  ctx.moveTo(-3.5, 70); ctx.arc(-3.5, 70, 4, 0, 2 * Math.PI);
+  ctx.moveTo(3.5, 70); ctx.arc(3.5, 70, 4, 0, 2 * Math.PI);
+  ctx.fill();
+  if (raised) {
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath(); ctx.arc(-28, 107, 10, 0, 2 * Math.PI); ctx.fill();
+  }
+  ctx.restore();
+}
+
+const scene = $("scene");
+const sctx = scene.getContext("2d");
+function drawScene() {
+  const W = scene.width, H = scene.height;
+  const buildings = [];
+  let x = 0;
+  while (x < W) { const b = makeBuilding(x); buildings.push(b); x += b.width + 4; }
+  sctx.fillStyle = "#0C222C";
+  sctx.fillRect(0, 0, W, H);
+  sctx.fillStyle = "#ECEAEA";
+  sctx.beginPath(); sctx.arc(750, 70, 60, 0, 2 * Math.PI); sctx.fill();
+  sctx.save();
+  sctx.translate(0, H);
+  sctx.scale(1, -1);
+  buildings.forEach((b) => drawBuilding(sctx, b));
+  drawGorilla(sctx, buildings[1], true);
+  drawGorilla(sctx, buildings[buildings.length - 2], false);
+  sctx.restore();
+}
+drawScene();
+$("regen").addEventListener("click", drawScene);
+
+/* ================= start screen ================= */
+const total = QUESTIONS.length;
+$("lead").textContent =
+  total + " " + plural(total, "питання", "питання", "питань") +
+  " про те, як працює кожна частина коду: від генерації міста до розрахунку кута кидка. Після кожної відповіді ти побачиш пояснення з посиланням на конкретні рядки.";
+
+const secList = $("sections");
+SECTIONS.forEach((s) => {
+  const n = QUESTIONS.filter((q) => q.s === s.id).length;
+  const li = el("li");
+  const b = el("button", "sec-btn");
+  b.type = "button";
+  b.appendChild(el("span", "sec-title", s.title));
+  b.appendChild(el("span", "sec-count", n + " " + plural(n, "питання", "питання", "питань")));
+  b.appendChild(el("span", "sec-note", s.note));
+  b.addEventListener("click", () => startRun(QUESTIONS.filter((q) => q.s === s.id)));
+  li.appendChild(b);
+  secList.appendChild(li);
+});
+$("start-all").addEventListener("click", () => startRun(QUESTIONS));
+
+function show(id) {
+  ["screen-start", "screen-quiz", "screen-result"].forEach((s) => $(s).classList.toggle("hidden", s !== id));
+  window.scrollTo(0, 0);
+}
+
+/* ================= quiz engine ================= */
+let run = null;
+let cur = null; // { ready(), check() -> {ok, detail} }
+
+function startRun(list) {
+  run = { list: list.slice(), i: 0, results: [] };
+  show("screen-quiz");
+  renderQ();
+}
+
+const TYPE_HINT = {
+  choice: "Обери одну відповідь.",
+  number: "Введи число.",
+  line: "Клікни рядок у коді.",
+  order: "Натискай на пункти в правильному порядку.",
+  demo: "Інтерактивне завдання."
+};
+
+function renderQ() {
+  const q = run.list[run.i];
+  const sec = SECTIONS.find((s) => s.id === q.s);
+  $("q-section").textContent = sec.title;
+  $("q-count").textContent = (run.i + 1) + " з " + run.list.length;
+  $("q-progress").style.width = (run.i / run.list.length) * 100 + "%";
+
+  const area = $("q-area");
+  area.innerHTML = "";
+  area.appendChild(el("h2", "qtext", q.q));
+  area.appendChild(el("p", "qtype", TYPE_HINT[q.type]));
+
+  const main = $("q-main");
+  main.textContent = "Перевірити";
+  main.dataset.mode = "check";
+
+  const update = () => { main.disabled = !cur.ready(); };
+  cur = RENDER[q.type](q, area, update);
+  update();
+
+  if (q.hint) area.appendChild(el("p", "hint", "Підказка: " + q.hint));
+  const fb = el("div");
+  fb.id = "q-fb";
+  area.appendChild(fb);
+  const first = area.querySelector(".opt, input, .code.pick li, .chip, canvas, input[type=range]");
+  if (first && run.i > 0) first.focus({ preventScroll: true });
+}
+
+$("q-main").addEventListener("click", () => {
+  const main = $("q-main");
+  const q = run.list[run.i];
+  if (main.dataset.mode === "check") {
+    if (!cur.ready()) return;
+    const res = cur.check();
+    run.results[run.i] = res.ok;
+    const fb = $("q-fb");
+    fb.className = "fb " + (res.ok ? "ok" : "bad");
+    fb.innerHTML = "";
+    fb.appendChild(el("h3", null, res.ok ? "Правильно" : "Не зовсім"));
+    if (!res.ok && res.detail) {
+      const p = el("p");
+      p.appendChild(document.createTextNode("Правильна відповідь: "));
+      p.appendChild(el("span", "correct", res.detail));
+      fb.appendChild(p);
+    }
+    fb.appendChild(el("p", null, q.explain));
+    $("q-progress").style.width = ((run.i + 1) / run.list.length) * 100 + "%";
+    main.dataset.mode = "next";
+    main.disabled = false;
+    main.textContent = run.i + 1 < run.list.length ? "Наступне питання" : "Показати результат";
+    main.focus({ preventScroll: true });
+    fb.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  } else {
+    run.i++;
+    if (run.i < run.list.length) { renderQ(); window.scrollTo(0, 0); }
+    else showResults();
+  }
+});
+$("q-quit").addEventListener("click", () => show("screen-start"));
+
+/* ---------- renderers ---------- */
+const RENDER = {
+  choice(q, area, update) {
+    if (q.code) area.appendChild(codeBlock(q.code, false));
+    const wrap = el("div", "opts");
+    let picked = null, locked = false;
+    const order = shuffle(q.options.map((t, i) => i));
+    const btns = order.map((idx) => {
+      const b = el("button", "opt", q.options[idx]);
+      b.type = "button";
+      b.setAttribute("aria-pressed", "false");
+      b.addEventListener("click", () => {
+        if (locked) return;
+        picked = idx;
+        btns.forEach((x) => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+        update();
+      });
+      b._idx = idx;
+      wrap.appendChild(b);
+      return b;
+    });
+    area.appendChild(wrap);
+    return {
+      ready: () => picked !== null && !locked,
+      check() {
+        locked = true;
+        btns.forEach((b) => {
+          b.disabled = true;
+          if (b._idx === q.answer) b.classList.add("is-ok");
+          else if (b._idx === picked) b.classList.add("is-bad");
+        });
+        return { ok: picked === q.answer, detail: q.options[q.answer] };
+      }
+    };
+  },
+
+  number(q, area, update) {
+    if (q.code) area.appendChild(codeBlock(q.code, false));
+    const row = el("div", "numrow");
+    const inp = el("input");
+    inp.type = "text";
+    inp.inputMode = "decimal";
+    inp.autocomplete = "off";
+    inp.setAttribute("aria-label", "Твоя відповідь");
+    inp.placeholder = "Число";
+    let locked = false;
+    inp.addEventListener("input", update);
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter" && !$("q-main").disabled) $("q-main").click(); });
+    row.appendChild(inp);
+    area.appendChild(row);
+    const val = () => parseFloat(inp.value.replace(",", ".").replace(/\s|px/g, ""));
+    return {
+      ready: () => !locked && !isNaN(val()),
+      check() {
+        locked = true;
+        inp.readOnly = true;
+        const ok = Math.abs(val() - q.answer) < 1e-9;
+        inp.classList.add(ok ? "is-ok" : "is-bad");
+        return { ok, detail: String(q.answer) };
+      }
+    };
+  },
+
+  line(q, area, update) {
+    const block = codeBlock(q.code, true);
+    area.appendChild(block);
+    const lis = [...block.querySelectorAll("li")];
+    let picked = null, locked = false;
+    lis.forEach((li, i) => {
+      const pick = () => {
+        if (locked) return;
+        picked = i;
+        lis.forEach((x) => x.classList.toggle("chosen", x === li));
+        update();
+      };
+      li.addEventListener("click", pick);
+      li.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+    });
+    return {
+      ready: () => picked !== null && !locked,
+      check() {
+        locked = true;
+        block.classList.remove("pick");
+        lis.forEach((x) => { x.classList.remove("chosen"); x.tabIndex = -1; });
+        lis[q.answer].classList.add("is-ok");
+        if (picked !== q.answer) lis[picked].classList.add("is-bad");
+        return { ok: picked === q.answer, detail: "рядок " + (q.answer + 1) + ": " + q.code[q.answer].trim() };
+      }
+    };
+  },
+
+  order(q, area, update) {
+    const seq = el("div", "order-seq");
+    const pool = el("div", "order-pool");
+    const tools = el("div", "order-tools");
+    const reset = el("button", "textbtn", "Скинути порядок");
+    reset.type = "button";
+    tools.appendChild(reset);
+    let chosen = [], locked = false;
+    const items = shuffle(q.items.map((t, i) => i));
+    const chips = items.map((idx) => {
+      const c = el("button", "chip", q.items[idx]);
+      c.type = "button";
+      c._idx = idx;
+      c.addEventListener("click", () => {
+        if (locked) return;
+        if (c.parentNode === pool) { chosen.push(idx); seq.appendChild(c); }
+        else { chosen = chosen.filter((x) => x !== idx); pool.appendChild(c); }
+        update();
+      });
+      pool.appendChild(c);
+      return c;
+    });
+    reset.addEventListener("click", () => {
+      if (locked) return;
+      chosen = [];
+      chips.forEach((c) => pool.appendChild(c));
+      update();
+    });
+    area.appendChild(seq);
+    area.appendChild(pool);
+    area.appendChild(tools);
+    pool.style.marginBottom = "12px";
+    return {
+      ready: () => !locked && chosen.length === q.items.length,
+      check() {
+        locked = true;
+        tools.remove();
+        let ok = true;
+        [...seq.children].forEach((c, pos) => {
+          c.disabled = true;
+          const good = c._idx === pos;
+          if (!good) ok = false;
+          c.classList.add(good ? "is-ok" : "is-bad");
+        });
+        return { ok, detail: q.items.map((t, i) => (i + 1) + ". " + t).join("   ") };
+      }
+    };
+  },
+
+  demo(q, area, update) {
+    return DEMOS[q.demo](q, area, update);
+  }
+};
+
+/* ---------- interactive demos ---------- */
+const DEMOS = {
+  building(q, area, update) {
+    const box = el("div", "demo");
+    const grid = el("div", "demo-grid");
+    const cv = el("canvas");
+    cv.width = 170; cv.height = 330;
+    cv.setAttribute("aria-label", "Будинок з вікнами за поточними розмірами");
+    const ctrl = el("div");
+    const mk = (label, min, max, val) => {
+      const w = el("div", "slider");
+      const l = el("label");
+      const name = el("span", null, label);
+      const out = el("b", null, String(val));
+      l.appendChild(name); l.appendChild(out);
+      const r = el("input");
+      r.type = "range"; r.min = min; r.max = max; r.value = val; r.step = 1;
+      r.setAttribute("aria-label", label);
+      w.appendChild(l); w.appendChild(r);
+      ctrl.appendChild(w);
+      return { r, out };
+    };
+    const wS = mk("building.width", 80, 129, 100);
+    const hS = mk("building.height", 80, 299, 200);
+    const dl = el("dl", "readout");
+    const addRow = (k) => { dl.appendChild(el("dt", null, k)); const d = el("dd"); dl.appendChild(d); return d; };
+    const fOut = addRow("numberOfFloors");
+    const rOut = addRow("numberOfRooms");
+    const tOut = addRow("вікон усього");
+    ctrl.appendChild(dl);
+    grid.appendChild(cv); grid.appendChild(ctrl);
+    box.appendChild(grid);
+    area.appendChild(box);
+
+    const colors = [];
+    for (let i = 0; i < 50; i++) colors.push(Math.random() < 0.5 ? "#020247" : "#F3EFEC");
+    const ctx = cv.getContext("2d");
+    let vals = { floors: 0, rooms: 0 }, touched = false, locked = false;
+    const redraw = () => {
+      const w = +wS.r.value, h = +hS.r.value;
+      wS.out.textContent = w; hS.out.textContent = h;
+      ctx.fillStyle = "#0C222C"; ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.save(); ctx.translate(0, cv.height); ctx.scale(1, -1);
+      vals = drawBuilding(ctx, { x: (cv.width - w) / 2, width: w, height: h, windowColors: colors });
+      ctx.restore();
+      fOut.textContent = vals.floors;
+      rOut.textContent = vals.rooms;
+      tOut.textContent = vals.floors * vals.rooms;
+    };
+    [wS.r, hS.r].forEach((r) => r.addEventListener("input", () => { if (locked) return; touched = true; redraw(); update(); }));
+    redraw();
+    return {
+      ready: () => touched && !locked,
+      check() {
+        locked = true;
+        wS.r.disabled = true; hS.r.disabled = true;
+        return { ok: q.check(vals), detail: "ширина від 124 до 129, висота від 160 до 195" };
+      }
+    };
+  },
+
+  drag(q, area, update) {
+    const box = el("div", "demo");
+    const cv = el("canvas");
+    const W = 640, H = 340;
+    cv.width = W; cv.height = H;
+    cv.setAttribute("aria-label", "Поле для натягу бомби");
+    box.appendChild(cv);
+    const dl = el("dl", "readout");
+    const addRow = (k) => { dl.appendChild(el("dt", null, k)); const d = el("dd", null, "0"); dl.appendChild(d); return d; };
+    const o = {
+      dx: addRow("DeltaX"), dy: addRow("DeltaY"),
+      vx: addRow("velocity.x"), vy: addRow("velocity.y"),
+      vel: addRow("velocity (у панелі)"), ang: addRow("angle (у панелі)")
+    };
+    box.appendChild(dl);
+    area.appendChild(box);
+
+    const ctx = cv.getContext("2d");
+    const base = { x: W / 2, y: 130 }; // in flipped coordinates (from bottom)
+    let v = { x: 0, y: 0 }, vals = { velocity: 0, angle: 0 };
+    let dragging = false, start = null, touched = false, locked = false;
+
+    const draw = () => {
+      ctx.fillStyle = "#0C222C"; ctx.fillRect(0, 0, W, H);
+      ctx.save(); ctx.translate(0, H); ctx.scale(1, -1);
+      // grab area (tomato circle, stays in place like #bomb-grab-area)
+      ctx.fillStyle = "tomato";
+      ctx.globalAlpha = 0.85;
+      ctx.beginPath(); ctx.arc(base.x, base.y, 15, 0, 2 * Math.PI); ctx.fill();
+      ctx.globalAlpha = 1;
+      // bomb like drawBomb
+      ctx.save();
+      ctx.translate(base.x, base.y);
+      ctx.translate(-v.x / 6.25, -v.y / 6.25);
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath(); ctx.arc(0, 0, 10, 0, 2 * Math.PI); ctx.fill();
+      ctx.strokeStyle = "#4F7BFF"; ctx.lineWidth = 6; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(v.x, v.y); ctx.stroke();
+      ctx.restore();
+      ctx.restore();
+    };
+    const toCanvas = (e) => {
+      const r = cv.getBoundingClientRect();
+      return { x: (e.clientX - r.left) * (W / r.width), y: (e.clientY - r.top) * (H / r.height), scale: W / r.width };
+    };
+    cv.addEventListener("pointerdown", (e) => {
+      if (locked) return;
+      const p = toCanvas(e);
+      const gx = base.x, gy = H - base.y;
+      if (Math.hypot(p.x - gx, p.y - gy) > Math.max(30, 26 * p.scale)) return;
+      dragging = true;
+      start = { x: e.clientX, y: e.clientY };
+      cv.setPointerCapture(e.pointerId);
+      cv.style.cursor = "grabbing";
+    });
+    cv.addEventListener("pointermove", (e) => {
+      if (!dragging) {
+        if (!locked) {
+          const p = toCanvas(e);
+          cv.style.cursor = Math.hypot(p.x - base.x, p.y - (H - base.y)) <= Math.max(30, 26 * p.scale) ? "grab" : "default";
+        }
+        return;
+      }
+      const DeltaX = e.clientX - start.x;
+      const DeltaY = e.clientY - start.y;
+      v = { x: -DeltaX, y: DeltaY };
+      const hyp = Math.sqrt(DeltaX ** 2 + DeltaY ** 2);
+      const ang = hyp === 0 ? 0 : (Math.asin(DeltaY / hyp) / Math.PI) * 180;
+      vals = { velocity: Math.round(hyp), angle: Math.round(ang) };
+      o.dx.textContent = Math.round(DeltaX);
+      o.dy.textContent = Math.round(DeltaY);
+      o.vx.textContent = Math.round(v.x);
+      o.vy.textContent = Math.round(v.y);
+      o.vel.textContent = vals.velocity;
+      o.ang.textContent = vals.angle + "°";
+      touched = true;
+      draw();
+      update();
+    });
+    const stop = () => { dragging = false; cv.style.cursor = "default"; update(); };
+    cv.addEventListener("pointerup", stop);
+    cv.addEventListener("pointercancel", stop);
+    draw();
+    return {
+      ready: () => touched && !locked && !dragging,
+      check() {
+        locked = true;
+        return { ok: q.check(vals), detail: "velocity 95–105 і angle 40°–50°: тягни вниз і вбік приблизно на 71 px по кожній осі" };
+      }
+    };
+  }
+};
+
+/* ================= results ================= */
+function showResults() {
+  show("screen-result");
+  const okCount = run.results.filter(Boolean).length;
+  const n = run.list.length;
+  const big = $("r-big");
+  big.innerHTML = "";
+  big.appendChild(document.createTextNode(okCount));
+  big.appendChild(el("small", null, " з " + n));
+  const pct = okCount / n;
+  $("r-text").textContent =
+    pct === 1 ? "Усі відповіді правильні. Логіку цього коду ти розумієш повністю." :
+    pct >= 0.75 ? "Добре розумієш код. Подивись нижче, в яких частинах були помилки, і повтори саме їх." :
+    pct >= 0.5 ? "Основу зрозуміло, але кілька частин варто перечитати разом з кодом. Список нижче підкаже, які саме." :
+    "Варто ще раз пройтися по коду частина за частиною. Почни з розділів, де найменше правильних відповідей.";
+
+  const list = $("r-list");
+  list.innerHTML = "";
+  SECTIONS.forEach((s) => {
+    const idx = run.list.map((q, i) => (q.s === s.id ? i : -1)).filter((i) => i >= 0);
+    if (!idx.length) return;
+    const good = idx.filter((i) => run.results[i]).length;
+    const li = el("li");
+    li.appendChild(el("span", null, s.title));
+    li.appendChild(el("span", "res-score", good + " / " + idx.length));
+    const bar = el("div", "res-bar");
+    const fill = el("span");
+    fill.style.width = (good / idx.length) * 100 + "%";
+    bar.appendChild(fill);
+    li.appendChild(bar);
+    list.appendChild(li);
+  });
+
+  const wrong = run.list.filter((q, i) => !run.results[i]);
+  const wb = $("r-wrong");
+  wb.classList.toggle("hidden", wrong.length === 0);
+  wb.onclick = () => startRun(wrong);
+  const again = run.list.slice();
+  $("r-again").onclick = () => startRun(again);
+}
+$("r-home").addEventListener("click", () => show("screen-start"));
+
+</script>
+</body>
+</html>
